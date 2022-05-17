@@ -2,7 +2,10 @@ package com.example.ukeesstest.config.security;
 
 import com.example.ukeesstest.config.security.filter.CustomAuthenticationFilter;
 import com.example.ukeesstest.config.security.filter.CustomAuthorizationFilter;
-import com.example.ukeesstest.service.AuthUserService;
+import com.example.ukeesstest.config.security.filter.JwtUtils;
+import com.example.ukeesstest.dao.authUser.AuthUserService;
+import com.example.ukeesstest.exception.advice.ExceptionController;
+import jdk.jshell.spi.ExecutionControlProvider;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -24,6 +27,8 @@ import javax.servlet.http.HttpServletResponse;
 public class WebSecurityConfig extends WebSecurityConfigurerAdapter {
     private final AuthUserService authUserService;
     private final BCryptPasswordEncoder bCryptPasswordEncoder;
+    private final JwtUtils jwtUtils;
+    private final ExceptionController exceptionController;
     private static final String[] AUTH_WHITELIST = {
             "/swagger-resources/**",
             "/swagger-ui.html",
@@ -31,8 +36,7 @@ public class WebSecurityConfig extends WebSecurityConfigurerAdapter {
             "/v2/api-docs",
             "/webjars/**",
             "/api/auth/signIn/**",
-            "/api/auth/refreshToken/**",
-            "/api/auth/signUp"
+            "/api/auth/signUp",
     };
 
     @Override
@@ -42,14 +46,11 @@ public class WebSecurityConfig extends WebSecurityConfigurerAdapter {
 
     @Override
     protected void configure(HttpSecurity http) throws Exception {
-        CustomAuthenticationFilter customAuthenticationFilter = new CustomAuthenticationFilter(authenticationManagerBean(), authUserService);
+        CustomAuthenticationFilter customAuthenticationFilter = new CustomAuthenticationFilter(authenticationManagerBean(), jwtUtils);
         customAuthenticationFilter.setFilterProcessesUrl("/api/auth/signIn");
         http.cors();
         http.csrf().disable();
-        http
-                .exceptionHandling()
-                .authenticationEntryPoint(
-                        (request, response, ex) -> {
+        http.exceptionHandling().authenticationEntryPoint((request, response, ex) -> {
                             response.sendError(
                                     HttpServletResponse.SC_UNAUTHORIZED,
                                     ex.getMessage()
@@ -57,11 +58,10 @@ public class WebSecurityConfig extends WebSecurityConfigurerAdapter {
                         }
                 );
         http.sessionManagement().sessionCreationPolicy(SessionCreationPolicy.STATELESS);
-        http.authorizeRequests().antMatchers(HttpMethod.POST, "/api/users/**").permitAll();
         http.authorizeRequests().antMatchers(AUTH_WHITELIST).permitAll();
         http.authorizeRequests().anyRequest().authenticated();
         http.addFilter(customAuthenticationFilter);
-        http.addFilterBefore(new CustomAuthorizationFilter(), UsernamePasswordAuthenticationFilter.class);
+        http.addFilterBefore(new CustomAuthorizationFilter(jwtUtils), UsernamePasswordAuthenticationFilter.class);
     }
 
     @Bean

@@ -1,1 +1,12 @@
-"# ukeess-test" 
+"# ukeess-test"
+Туторіал: 
+Для запуску потрібно запустити проект Spring Boot 
+і ReactJS(в папці "src/main/webapp/reactjs" прописати команду "npm start").
+Схема бази даних є в папці "src/main/resources/db/migration", вона виконається автоматично.
+Потрібно поставити свої значення до бази даних в файлі "application.properties":
+app.datasource.username=...
+app.datasource.password=...
+spring.flyway.user=...
+spring.flyway.password=...
+
+і мати базу даних з назвою "ukeess_test".

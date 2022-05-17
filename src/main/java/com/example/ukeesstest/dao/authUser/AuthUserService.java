@@ -1,7 +1,6 @@
-package com.example.ukeesstest.service;
+package com.example.ukeesstest.dao.authUser;
 
 import com.example.ukeesstest.domain.AuthUser;
-import com.example.ukeesstest.repo.AuthUserRepo;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UserDetailsService;
@@ -12,15 +11,16 @@ import org.springframework.stereotype.Service;
 @Service
 @RequiredArgsConstructor
 public class AuthUserService implements UserDetailsService {
-    private final AuthUserRepo authUserRepo;
+    private final AuthUserDao authUserDao;
     private final PasswordEncoder passwordEncoder;
     @Override
     public UserDetails loadUserByUsername(String username) throws UsernameNotFoundException {
-        return authUserRepo.findAuthUserByUsername(username);
+        return authUserDao.findByUsername(username).orElse(null);
     }
 
     public AuthUser saveUser(AuthUser user) {
-        user.setPassword(passwordEncoder.encode(user.getPassword()));
-        return authUserRepo.save(user);
+        user.setUserPassword(passwordEncoder.encode(user.getUserPassword()));
+        authUserDao.save(user);
+        return authUserDao.findByUsername(user.getUsername()).orElse(null);
     }
 }

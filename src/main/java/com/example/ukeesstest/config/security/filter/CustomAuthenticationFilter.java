@@ -2,9 +2,12 @@ package com.example.ukeesstest.config.security.filter;
 
 import com.auth0.jwt.JWT;
 import com.auth0.jwt.algorithms.Algorithm;
+import com.example.ukeesstest.dao.authUser.AuthUserService;
 import com.example.ukeesstest.domain.AuthUser;
-import com.example.ukeesstest.service.AuthUserService;
+import com.example.ukeesstest.exception.DefaultException;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import lombok.RequiredArgsConstructor;
+import lombok.SneakyThrows;
 import org.springframework.http.MediaType;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.AuthenticationServiceException;
@@ -22,14 +25,10 @@ import java.util.Date;
 import java.util.HashMap;
 import java.util.Map;
 
+@RequiredArgsConstructor
 public class CustomAuthenticationFilter extends UsernamePasswordAuthenticationFilter {
     private final AuthenticationManager authenticationManager;
-    private final AuthUserService authUserService;
-
-    public CustomAuthenticationFilter(AuthenticationManager authenticationManager, AuthUserService authUserService) {
-        this.authenticationManager = authenticationManager;
-        this.authUserService = authUserService;
-    }
+    private final JwtUtils jwtUtils;
 
     @Override
     public Authentication attemptAuthentication(HttpServletRequest request, HttpServletResponse response) throws AuthenticationException {
@@ -47,28 +46,8 @@ public class CustomAuthenticationFilter extends UsernamePasswordAuthenticationFi
 
     @Override
     protected void successfulAuthentication(HttpServletRequest request, HttpServletResponse response, FilterChain chain, Authentication authResult) throws IOException, ServletException {
-        AuthUser user = (AuthUser)authResult.getPrincipal();
-
-        Algorithm algorithm = Algorithm.HMAC256("secret".getBytes());
-
-        String token = JWT.create()
-                .withSubject(user.getUsername())
-                .withExpiresAt(new Date(System.currentTimeMillis() + 3600 * 1000))
-                .sign(algorithm);
-
-        String refreshToken = JWT.create()
-                .withSubject(user.getUsername())
-                .withExpiresAt(new Date(System.currentTimeMillis() + 3600 * 100000))
-                .withClaim("refresh", "refresh")
-                .sign(algorithm);
-
-        Map<String, String> result = new HashMap<>();
-        result.put("userId", user.getId().toString());
-        result.put("expiresAt", "" + 3600);
-        result.put("token", token);
-        result.put("refreshToken", refreshToken);
         response.setContentType(MediaType.APPLICATION_JSON_VALUE);
-        new ObjectMapper().writeValue(response.getOutputStream(), result);
+        new ObjectMapper().writeValue(response.getOutputStream(), jwtUtils.generateToken((AuthUser)authResult.getPrincipal()));
     }
 
     @Override
