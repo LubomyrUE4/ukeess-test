@@ -1,7 +1,6 @@
 package com.example.ukeesstest.dao.department;
 
 import com.example.ukeesstest.domain.Department;
-import com.example.ukeesstest.domain.Employee;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.jdbc.core.RowMapper;
 import org.springframework.stereotype.Repository;

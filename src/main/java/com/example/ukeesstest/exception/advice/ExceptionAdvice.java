@@ -13,7 +13,7 @@ import java.util.HashMap;
 import java.util.Map;
 
 @ControllerAdvice
-public class ExceptionController {
+public class ExceptionAdvice {
     @ExceptionHandler(DefaultException.class)
     @ResponseBody
     public ResponseEntity<?> handleDefaultException(DefaultException e) {

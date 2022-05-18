@@ -4,6 +4,7 @@ import com.example.ukeesstest.dao.authUser.AuthUserService;
 import com.example.ukeesstest.domain.AuthUser;
 import com.example.ukeesstest.exception.DefaultException;
 import com.example.ukeesstest.payload.SignUpForm;
+import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
@@ -13,6 +14,7 @@ import org.springframework.web.bind.annotation.*;
 
 @RestController
 @RequestMapping("/api/auth")
+@Api(description = "Auth Controller")
 @CrossOrigin
 @RequiredArgsConstructor
 public class AuthController {

@@ -2,10 +2,8 @@ package com.example.ukeesstest.config.security;
 
 import com.example.ukeesstest.config.security.filter.CustomAuthenticationFilter;
 import com.example.ukeesstest.config.security.filter.CustomAuthorizationFilter;
-import com.example.ukeesstest.config.security.filter.JwtUtils;
+import com.example.ukeesstest.config.security.JWT.JwtUtils;
 import com.example.ukeesstest.dao.authUser.AuthUserService;
-import com.example.ukeesstest.exception.advice.ExceptionController;
-import jdk.jshell.spi.ExecutionControlProvider;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -13,6 +11,7 @@ import org.springframework.http.HttpMethod;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.config.annotation.authentication.builders.AuthenticationManagerBuilder;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
+import org.springframework.security.config.annotation.web.builders.WebSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.security.config.annotation.web.configuration.WebSecurityConfigurerAdapter;
 import org.springframework.security.config.http.SessionCreationPolicy;
@@ -25,16 +24,24 @@ import javax.servlet.http.HttpServletResponse;
 @EnableWebSecurity
 @RequiredArgsConstructor
 public class WebSecurityConfig extends WebSecurityConfigurerAdapter {
+    /*@Override
+    protected void configure(HttpSecurity http) throws Exception {
+        http.csrf().disable();
+        http.authorizeRequests().anyRequest().permitAll();
+    }*/
     private final AuthUserService authUserService;
     private final BCryptPasswordEncoder bCryptPasswordEncoder;
     private final JwtUtils jwtUtils;
-    private final ExceptionController exceptionController;
     private static final String[] AUTH_WHITELIST = {
-            "/swagger-resources/**",
-            "/swagger-ui.html",
-            "/swagger-ui/**",
             "/v2/api-docs",
+            "/swagger-resources",
+            "/swagger-resources/**",
+            "/configuration/ui",
+            "/configuration/security",
+            "/swagger-ui.html",
             "/webjars/**",
+            "/v3/api-docs/**",
+            "/swagger-ui/**",
             "/api/auth/signIn/**",
             "/api/auth/signUp",
     };
@@ -50,18 +57,18 @@ public class WebSecurityConfig extends WebSecurityConfigurerAdapter {
         customAuthenticationFilter.setFilterProcessesUrl("/api/auth/signIn");
         http.cors();
         http.csrf().disable();
-        http.exceptionHandling().authenticationEntryPoint((request, response, ex) -> {
-                            response.sendError(
-                                    HttpServletResponse.SC_UNAUTHORIZED,
-                                    ex.getMessage()
-                            );
-                        }
-                );
+        http.exceptionHandling().authenticationEntryPoint((request, response, ex) ->
+                response.sendError(HttpServletResponse.SC_UNAUTHORIZED, ex.getMessage()));
         http.sessionManagement().sessionCreationPolicy(SessionCreationPolicy.STATELESS);
         http.authorizeRequests().antMatchers(AUTH_WHITELIST).permitAll();
         http.authorizeRequests().anyRequest().authenticated();
         http.addFilter(customAuthenticationFilter);
         http.addFilterBefore(new CustomAuthorizationFilter(jwtUtils), UsernamePasswordAuthenticationFilter.class);
+    }
+
+    @Override
+    public void configure(WebSecurity web) throws Exception {
+        web.ignoring().antMatchers("/swagger-resources/", "/webjars/") .antMatchers(HttpMethod.OPTIONS, "/**");
     }
 
     @Bean
